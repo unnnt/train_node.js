@@ -1,0 +1,22 @@
+{
+  "name": "8-npm",
+  "version": "1.0.0",
+  "description": "tes node.js",
+  "type": "module",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app",
+    "dev": "ls",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Untung Budi U",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "mysql2": "^3.9.3",
+    "nodemon": "^3.1.0",
+    "sequelize": "^6.37.2",
+    "validator": "^13.11.0"
+  }
+}
