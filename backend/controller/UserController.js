@@ -1,14 +1,69 @@
-import { where } from "sequelize";
+import { Op } from "sequelize";
 import User from "../models/UserModel.js";
 
-export const getUsers = async(req, res) =>{
-    try{
-        const response = await User.findAll();
-        res.status(200).json(response);
-    } catch (error){
-        console.log(error.message);
+export const getUsers = async (req, res) => {
+    const page = parseInt(req.query.page) || 0;
+    const limit = parseInt(req.query.limit) || 10;
+    const search = req.query.search_query || "";
+    const offset = limit * page;
+    console.log("Received request to search users with query:", search, "Page:", page, "Limit:", limit);
+
+    try {
+        const totalRows = await User.count({
+            where: {
+                [Op.or]: [
+                    {
+                        name: {
+                            [Op.like]: '%' + search + '%'
+                        }
+                    },
+                    {
+                        email: {
+                            [Op.like]: '%' + search + '%'
+                        }
+                    }
+                ]
+            }
+        });
+
+        console.log("Total Rows Found:", totalRows);
+        const totalPage = Math.ceil(totalRows / limit);
+        console.log("Total Pages:", totalPage);
+        const result = await User.findAll({
+            where: {
+                [Op.or]: [
+                    {
+                        name: {
+                            [Op.like]: '%' + search + '%'
+                        }
+                    },
+                    {
+                        email: {
+                            [Op.like]: '%' + search + '%'
+                        }
+                    }
+                ]
+            },
+            offset: offset,
+            limit: limit,
+            order: [
+                ['id', 'DESC']
+            ]
+        });
+        console.log("Search Result:", result);
+        res.json({
+            result: result,
+            page: page,
+            limit: limit,
+            totalRows: totalRows,
+            totalPage: totalPage
+        });
+    } catch (error) {
+        console.error("Error occurred during user search:", error);
+        res.status(500).json({ error: "Internal server error" });
     }
-}
+};
+
 
 export const getUserById = async(req, res) =>{
     try{

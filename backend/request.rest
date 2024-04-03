@@ -14,14 +14,17 @@ Content-Type: application/json
 }
 
 ###
-PATCH http://localhost:5000/users/2
+PATCH http://localhost:5000/users/1
 Content-Type: application/json
 
 {
-    "name" : "Budi",
-    "email" : "budisi1234@gmail.com",
-    "gender" : "male"
+    "name" : "Budi U",
+    "email" : "budisi12adada34@gmail.com",
+    "gender" : "Female"
 }
 
 ###
 DELETE http://localhost:5000/users/3
+
+###
+GET http://localhost:5000/users?search_query=Un&page=0&limit=10
