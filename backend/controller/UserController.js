@@ -1,7 +1,7 @@
 import { Op } from "sequelize";
 import User from "../models/UserModel.js";
 
-export const getUsers = async (req, res) => {
+export const getUsersSearch = async (req, res) => {
     const page = parseInt(req.query.page) || 0;
     const limit = parseInt(req.query.limit) || 10;
     const search = req.query.search_query || "";
@@ -112,3 +112,47 @@ export const deleteUser = async(req, res) =>{
         console.log(error.message);
     }
 }
+export const getUsersSorted = async (req, res) => {
+    console.log("Function getUsersSorted is being executed...");
+
+    const page = parseInt(req.query.page) || 0;
+    const limit = parseInt(req.query.limit) || 10;
+    const sortBy = req.query.sortBy || 'id';
+    const sortOrder = req.query.sortOrder || 'ASC';
+    const offset = limit * page;
+
+    const allowedSortByFields = ['id', 'name', 'email', 'gender', 'createdAt', 'updatedAt'];
+    const allowedSortOrders = ['ASC', 'DESC'];
+    const validSortBy = allowedSortByFields.includes(sortBy) ? sortBy : 'id';
+    const validSortOrder = allowedSortOrders.includes(sortOrder.toUpperCase()) ? sortOrder.toUpperCase() : 'ASC';
+  
+    try {
+        const totalRows = await User.count();
+        const totalPage = Math.ceil(totalRows / limit);
+  
+        const result = await User.findAll({
+            offset: offset,
+            limit: limit,
+            order: [[validSortBy, validSortOrder]],
+            attributes: { exclude: ['password'] } // Exclude sensitive data
+        });
+
+        console.log('Sorted Users:', result);
+  
+        res.json({
+            result,
+            page: page,
+            limit: limit,
+            totalRows,
+            totalPage
+        });
+    } catch (error) {
+        console.error('Error occurred while fetching users:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+
+
+
+
