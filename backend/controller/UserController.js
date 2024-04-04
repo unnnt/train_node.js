@@ -1,5 +1,6 @@
 import { Op } from "sequelize";
 import User from "../models/UserModel.js";
+import UserHistory from "../models/history.js";
 
 export const getUsersSearch = async (req, res) => {
     const page = parseInt(req.query.page) || 0;
@@ -87,19 +88,6 @@ export const createUser = async(req, res) =>{
     }
 }
 
-export const updateUser = async(req, res) =>{
-    try{
-        await User.update(req.body,{
-            where:{
-                id: req.params.id
-            }
-        } );
-    res.status(200).json({msg : "User Updated"});
-    } catch (error){
-        console.log(error.message);
-    }
-}
-
 export const deleteUser = async(req, res) =>{
     try{
         await User.destroy({
@@ -134,7 +122,7 @@ export const getUsersSorted = async (req, res) => {
             offset: offset,
             limit: limit,
             order: [[validSortBy, validSortOrder]],
-            attributes: { exclude: ['password'] } // Exclude sensitive data
+            attributes: { exclude: ['password'] }
         });
 
         console.log('Sorted Users:', result);
@@ -152,6 +140,57 @@ export const getUsersSorted = async (req, res) => {
     }
 };
 
+const saveUserHistory = async (userId, action, columnChanged, oldValue, newValue) => {
+    try {
+        await UserHistory.create({
+            userId: userId,
+            action: action,
+            columnChanged: columnChanged,
+            oldValue: oldValue,
+            newValue: newValue,
+            updatedAt: new Date()
+        });
+    } catch (error) {
+        console.error("Error occurred while saving user history:", error);
+    }
+};
+
+export const updateUser = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, email, gender } = req.body;
+
+        const userBeforeUpdate = await User.findByPk(id);
+
+        await User.update({ name, email, gender }, { where: { id } });
+
+        if (userBeforeUpdate.name !== name) {
+            await saveUserHistory(id, "update", "name", userBeforeUpdate.name, name);
+        }
+        if (userBeforeUpdate.email !== email) {
+            await saveUserHistory(id, "update", "email", userBeforeUpdate.email, email);
+        }
+        if (userBeforeUpdate.gender !== gender) {
+            await saveUserHistory(id, "update", "gender", userBeforeUpdate.gender, gender);
+        }
+
+        res.status(200).json({ msg: "User Updated" });
+    } catch (error) {
+        console.log(error.message);
+        res.status(500).json({ error: "Internal server error" });
+    }
+};
+
+export const getUserHistory = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const history = await UserHistory.findAll({ where: { userId: id } });
+        res.json(history);
+    } catch (error) {
+        console.error("Error fetching user history:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+};
 
 
 
